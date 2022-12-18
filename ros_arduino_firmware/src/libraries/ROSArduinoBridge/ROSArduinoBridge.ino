@@ -194,7 +194,10 @@ int runCommand() {
   case READ_ENCODERS:
    Serial.println("读取编码器计数");
     int32_t read_EncodeTotal[4];
-    WireReadDataArray(MOTOR_ENCODER_TOTAL_ADDR,(uint8_t*)read_EncodeTotal,16);
+    
+    while(16 != WireReadDataArray(MOTOR_ENCODER_TOTAL_ADDR,(uint8_t*)read_EncodeTotal,16)){
+      Serial.println("忙");
+    }
      Serial.print(read_EncodeTotal[0]);Serial.print("\t");Serial.print(read_EncodeTotal[1]);Serial.print("\t");Serial.print(read_EncodeTotal[2]);Serial.print("\t");Serial.print(read_EncodeTotal[3]);Serial.println("\t");
    break;
    case RESET_ENCODERS:

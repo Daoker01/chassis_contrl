@@ -41,7 +41,7 @@ bool WireReadDataByte(uint8_t reg, uint8_t &val)
     
     return true;
 }
-//读取地址中指定长度的数据（reg：地址 val：数据内容 len：数据长度）
+//读取地址中指定长度的数据（reg：地址 val：数据内容 len：数据长度）,最后返回值i要等于len才正常
 int WireReadDataArray(   uint8_t reg, uint8_t *val, unsigned int len)
 {
     unsigned char i = 0;
@@ -137,10 +137,19 @@ void contrl_vel(int16_t *val)                                             //指�
      Serial.print(val[0]);Serial.print("\t");Serial.print(val[1]);Serial.print("\t");Serial.print(val[2]);Serial.print("\t");Serial.print(val[3]);Serial.println("\t");
       Serial.println("四个轮子的目标脉冲(单位脉冲/10ms)为：");
      Serial.print(vel2pulse[0]);Serial.print("\t");Serial.print(vel2pulse[1]);Serial.print("\t");Serial.print(vel2pulse[2]);Serial.print("\t");Serial.print(vel2pulse[3]);Serial.println("\t");
+     int8_t read_pwm[4]={0,0,0,0};
+     int8_t read_pid[4]={0,0,0,0};
+    
      for(int i=0;i<4;i++)
      {
      delay(2000);
      get_current_vel();
+      while(4 !=WireReadDataArray(MOTOR_FIXED_PWM_ADDR,(uint8_t*)read_pwm,4));
+     Serial.println("四个轮子的PWM为：");
+     Serial.print(read_pwm[0]);Serial.print("\t");Serial.print(read_pwm[1]);Serial.print("\t");Serial.print(read_pwm[2]);Serial.print("\t");Serial.print(read_pwm[3]);Serial.println("\t");
+      while(4 !=WireReadDataArray(MOTOR_FIXED_SPEED_ADDR,(uint8_t*)read_pid,4));
+     Serial.println("四个轮子的pid为：");
+     Serial.print(read_pid[0]);Serial.print("\t");Serial.print(read_pid[1]);Serial.print("\t");Serial.print(read_pid[2]);Serial.print("\t");Serial.print(read_pid[3]);Serial.println("\t");
      }
 }
 
