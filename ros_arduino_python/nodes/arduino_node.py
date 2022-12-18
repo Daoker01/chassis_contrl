@@ -26,7 +26,7 @@ from ros_arduino_msgs.srv import *
 from ros_arduino_python.base_controller import BaseController
 from geometry_msgs.msg import Twist
 import os, time
-import thread
+import _thread
 from serial.serialutil import SerialException
 
 class ArduinoROS():
@@ -39,7 +39,7 @@ class ArduinoROS():
         # Cleanup when termniating the node
         rospy.on_shutdown(self.shutdown)
 
-        self.port = rospy.get_param("~port", "/dev/ttyACM0")
+        self.port = rospy.get_param("~port", "/dev/ttyUSB0")
         self.baud = int(rospy.get_param("~baud", 57600))
         self.timeout = rospy.get_param("~timeout", 0.5)
         self.base_frame = rospy.get_param("~base_frame", 'base_link')
@@ -99,14 +99,14 @@ class ArduinoROS():
         rospy.loginfo("Connected to Arduino on port " + self.port + " at " + str(self.baud) + " baud")
 
         # Reserve a thread lock
-        mutex = thread.allocate_lock()
+        mutex = _thread.allocate_lock()
 
         # Initialize any sensors
         self.mySensors = list()
 
         sensor_params = rospy.get_param("~sensors", dict({}))
 
-        for name, params in sensor_params.iteritems():
+        for name, params in sensor_params.items():
             # Set the direction to input if not specified
             try:
                 params['direction']

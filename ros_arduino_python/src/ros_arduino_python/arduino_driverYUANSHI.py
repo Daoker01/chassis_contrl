@@ -38,7 +38,7 @@ class Arduino:
     N_ANALOG_PORTS = 6
     N_DIGITAL_PORTS = 12
 
-    def __init__(self, port="/dev/ttyUSB0", baudrate=57600, timeout=0.5, motors_reversed=False):
+    def __init__(self, port="/dev/ttyUSB0", baudrate=57600, timeout=1.5, motors_reversed=False):
 
         self.PID_RATE = 30 # Do not change this!  It is a fixed property of the Arduino PID controller.
         self.PID_INTERVAL = 1000 / 30
@@ -48,7 +48,7 @@ class Arduino:
         self.timeout = timeout
         self.encoder_count = 0
         self.writeTimeout = timeout
-        self.interCharTimeout = timeout / 30.
+        self.interCharTimeout = timeout / 30
         self.motors_reversed = motors_reversed
         # Keep things thread safe
         self.mutex = _thread.allocate_lock()
@@ -64,11 +64,16 @@ class Arduino:
             print ("Connecting to Arduino on port", self.port, "...")
             self.port = Serial(port=self.port, baudrate=self.baudrate, timeout=self.timeout, writeTimeout=self.writeTimeout)
             # The next line is necessary to give the firmware time to wake up.
-            time.sleep(1)
+            time.sleep(3)
+            print("Try sending.....")
+            #self.send('b')
             test = self.get_baud()
+            print(test)
             if test != self.baudrate:
-                time.sleep(1)
+                time.sleep(2)
                 test = self.get_baud()
+                print(test)
+                time.sleep(2)
                 if test != self.baudrate:
                     raise SerialException
             print ("Connected at", self.baudrate)
@@ -96,9 +101,10 @@ class Arduino:
         ''' This command should not be used on its own: it is called by the execute commands
             below in a thread safe manner.
         '''
-        self.port.write(cmd + '\r')
+        self.port.write(cmd+'\r')
+        #self.port.write((cmd+"\r").encode()) 
 
-    def recv(self, timeout=0.5):
+    def recv(self, timeout=1.5):
         timeout = min(timeout, self.timeout)
         ''' This command should not be used on its own: it is called by the execute commands
             below in a thread safe manner.  Note: we use read() instead of readline() since
@@ -107,15 +113,28 @@ class Arduino:
         c = ''
         value = ''
         attempts = 0
+        #print("333333333333333333333")
+        '''
+        while True:
+            value = self.port.recv(self)
+            if value != b'':
+                print("got:",value)
+            else:
+                return None
+            break
+        value=value.strip('\r')
+        return value
+        '''
+
         while c != b'\r':
             c = self.port.read(1)
             value += str(c,encoding = "utf-8")
-            attempts += 1
+            attempts +=  1
             if attempts * self.interCharTimeout > timeout:
                 return None
-
+        print(value)
         value = value.strip('\r')
-
+        print("=============",value)
         return value
 
     def recv_ack(self):
@@ -149,29 +168,41 @@ class Arduino:
         ''' Thread safe execution of "cmd" on the Arduino returning a single integer value.
         '''
         self.mutex.acquire()
+        print("ssssssssssssss")
 
         try:
             self.port.flushInput()
         except:
             pass
-
+        print("tttttttttttttt")
         ntries = 1
         attempts = 0
-
+        #time.sleep(0.5)
+        
+        
         try:
+            print("MMMMMMMMMMMMMMMMM")
+            
             self.port.write((cmd + '\r').encode())
+            print("xxxxxxxxxxxx...........")
             value = self.recv(self.timeout)
+            print("ccccccccccc...........")
+            
             while attempts < ntries and (value == '' or value == 'Invalid Command' or value == None):
                 try:
                     self.port.flushInput()
                     self.port.write((cmd + '\r').encode())
                     value = self.recv(self.timeout)
+                    print("RRRRRRRR...........")
+                    print(value)
                 except:
-                    print ("Exception executing command: " + cmd)
+                    print ("Exception  HHHH executing command: " + cmd)
                 attempts += 1
+              
         except:
+            print("vvvvvvvvvvvvvvvvv")
             self.mutex.release()
-            print ("Exception executing command: " + cmd)
+            print ("Exception executing command????????: " + cmd)
             value = None
 
         self.mutex.release()
@@ -191,12 +222,12 @@ class Arduino:
         attempts = 0
 
         try:
-            self.port.write((cmd + '\r').encode())
+            self.port.write(cmd + '\r')
             values = self.recv_array()
             while attempts < ntries and (values == '' or values == 'Invalid Command' or values == [] or values == None):
                 try:
                     self.port.flushInput()
-                    self.port.write((cmd + '\r').encode())
+                    self.port.write(cmd + '\r')
                     values = self.recv_array()
                 except:
                     print("Exception executing command: " + cmd)
@@ -229,12 +260,12 @@ class Arduino:
         attempts = 0
 
         try:
-            self.port.write((cmd + '\r').encode())
+            self.port.write(cmd + '\r')
             ack = self.recv(self.timeout)
             while attempts < ntries and (ack == '' or ack == 'Invalid Command' or ack == None):
                 try:
                     self.port.flushInput()
-                    self.port.write((cmd + '\r').encode())
+                    self.port.write(cmd + '\r')
                     ack = self.recv(self.timeout)
                 except:
                     print ("Exception executing command: " + cmd)
@@ -358,7 +389,7 @@ if __name__ == "__main__":
 
     baudRate = 57600
 
-    myArduino = Arduino(port=portName, baudrate=baudRate, timeout=0.5)
+    myArduino = Arduino(port=portName, baudrate=baudRate, timeout=1.5)
     myArduino.connect()
 
     print ("Sleeping for 1 second...")

@@ -100,6 +100,7 @@ void doPID(SetPointInfo * p) {
 
   p->output = output;
   p->PrevInput = input;
+  p->output = p->TargetTicksPerFrame; //让输入与输出相等，去除这里的函数的作用
 }
 
 /* Read the encoder values and call the PID routine */
